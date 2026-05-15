@@ -1,6 +1,8 @@
+// Forcer le chemin correct pour Render
+process.chdir(__dirname);
+console.log('Répertoire de travail :', process.cwd());
 const express = require('express');
 const app = express();
-
 // Cette page s'affichera directement - PAS de fichier externe
 app.get('/', (req, res) => {
     res.send(`
