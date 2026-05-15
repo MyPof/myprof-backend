@@ -3,61 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyProfEduc - Cours particuliers sans commission</title>
+    <title>MyProfEduc - Cours particuliers sécurisé</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100">
-    <div class="container mx-auto px-4 py-12">
-        <!-- Navigation -->
+    <div class="container mx-auto px-4 py-8">
         <nav class="bg-white rounded-2xl shadow-lg p-4 mb-8 flex justify-between items-center">
-            <div class="text-2xl font-bold text-blue-600">🎓 MyProfEduc</div>
+            <div class="text-2xl font-bold text-blue-600"><i class="fas fa-chalkboard-user text-yellow-500"></i> MyProfEduc</div>
             <div class="space-x-4">
-                <button onclick="showPage('home')" class="text-gray-600 hover:text-blue-600">Accueil</button>
-                <button onclick="showPage('teachers')" class="text-gray-600 hover:text-blue-600">Enseignants</button>
-                <button onclick="showPage('register')" class="text-gray-600 hover:text-blue-600">Inscription</button>
+                <button onclick="showPage('home')" class="hover:text-blue-600">Accueil</button>
+                <button onclick="showPage('teachers')" class="hover:text-blue-600">Enseignants</button>
+                <button onclick="showPage('register')" class="hover:text-blue-600">Inscription</button>
+                <button id="profileBtn" onclick="showPage('profile')" class="hidden hover:text-blue-600">Mon profil</button>
                 <button id="loginBtn" onclick="openLoginModal()" class="bg-blue-600 text-white px-4 py-2 rounded-full">Connexion</button>
                 <button id="logoutBtn" onclick="logout()" class="hidden bg-red-500 text-white px-4 py-2 rounded-full">Déconnexion</button>
             </div>
         </nav>
 
-        <!-- Page Accueil -->
-        <div id="homePage">
-            <div class="text-center py-12">
-                <h1 class="text-5xl font-bold text-blue-600 mb-4">Cours particuliers sans commission</h1>
-                <p class="text-xl text-gray-600 mb-8">Économisez 50% par rapport aux agences traditionnelles</p>
-                <button onclick="showPage('register')" class="bg-blue-600 text-white px-6 py-3 rounded-full text-lg">Inscription gratuite</button>
-                <button onclick="showPage('teachers')" class="border-2 border-blue-600 text-blue-600 px-6 py-3 rounded-full text-lg ml-4">Trouver un prof</button>
-            </div>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow text-center"><div class="text-4xl mb-2">🔍</div><h3 class="font-bold text-xl">Recherchez</h3><p>Trouvez le professeur idéal</p></div>
-                <div class="bg-white p-6 rounded-xl shadow text-center"><div class="text-4xl mb-2">🤝</div><h3 class="font-bold text-xl">Contact direct</h3><p>Échangez sans intermédiaire</p></div>
-                <div class="bg-white p-6 rounded-xl shadow text-center"><div class="text-4xl mb-2">💰</div><h3 class="font-bold text-xl">0% commission</h3><p>Payez l'enseignant directement</p></div>
-            </div>
+        <div id="homePage" class="text-center py-12">
+            <h1 class="text-5xl font-bold text-blue-600 mb-4">Cours particuliers sans commission</h1>
+            <p class="text-xl mb-8">Économisez 50% par rapport aux agences traditionnelles</p>
+            <button onclick="showPage('register')" class="bg-blue-600 text-white px-6 py-3 rounded-full text-lg">Inscription gratuite</button>
+            <button onclick="showPage('teachers')" class="border-2 border-blue-600 text-blue-600 px-6 py-3 rounded-full text-lg ml-4">Trouver un prof</button>
         </div>
 
-        <!-- Page Enseignants -->
         <div id="teachersPage" class="hidden">
             <h2 class="text-3xl font-bold mb-6">Nos enseignants</h2>
             <div id="teachersList" class="grid md:grid-cols-3 gap-6"></div>
         </div>
 
-        <!-- Page Inscription -->
+        <!-- Page d'inscription (Étape 1) -->
         <div id="registerPage" class="hidden max-w-md mx-auto bg-white p-8 rounded-xl shadow">
             <h2 class="text-2xl font-bold mb-6 text-center">Inscription</h2>
-            <input type="text" id="regName" placeholder="Nom complet" class="w-full border rounded-lg p-3 mb-4">
-            <input type="email" id="regEmail" placeholder="Email" class="w-full border rounded-lg p-3 mb-4">
-            <input type="password" id="regPassword" placeholder="Mot de passe" class="w-full border rounded-lg p-3 mb-4">
-            <select id="regRole" class="w-full border rounded-lg p-3 mb-4">
-                <option value="parent">Parent</option>
-                <option value="teacher">Enseignant</option>
-            </select>
-            <button onclick="register()" class="w-full bg-blue-600 text-white py-3 rounded-lg">S'inscrire</button>
+            <div id="registerForm">
+                <input type="text" id="regName" placeholder="Nom complet" class="w-full border rounded-lg p-3 mb-4">
+                <input type="email" id="regEmail" placeholder="Email" class="w-full border rounded-lg p-3 mb-4">
+                <input type="password" id="regPassword" placeholder="Mot de passe (8+ caractères, 1 majuscule, 1 chiffre)" class="w-full border rounded-lg p-3 mb-4">
+                <select id="regRole" class="w-full border rounded-lg p-3 mb-4">
+                    <option value="parent">Parent</option>
+                    <option value="teacher">Enseignant</option>
+                </select>
+                <button onclick="register()" class="w-full bg-blue-600 text-white py-3 rounded-lg">S'inscrire</button>
+            </div>
+            <!-- Page de vérification (Étape 2) -->
+            <div id="verificationSection" style="display: none;">
+                <p class="mb-4 text-center">Un code à 6 chiffres a été envoyé à votre email.</p>
+                <input type="text" id="verificationCode" placeholder="Code de vérification" class="w-full border rounded-lg p-3 mb-4">
+                <button onclick="verifyCode()" class="w-full bg-green-600 text-white py-3 rounded-lg">Vérifier mon compte</button>
+            </div>
         </div>
 
-        <!-- Page Profil -->
         <div id="profilePage" class="hidden max-w-md mx-auto bg-white p-8 rounded-xl shadow">
             <h2 class="text-2xl font-bold mb-6">Mon profil</h2>
             <div id="profileInfo"></div>
@@ -65,7 +61,6 @@
         </div>
     </div>
 
-    <!-- Modal Connexion -->
     <div id="loginModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-xl w-96">
             <h3 class="text-xl font-bold mb-4">Connexion</h3>
@@ -77,87 +72,98 @@
     </div>
 
     <script>
-        // ⚠️ IMPORTANT : Remplacez cette URL par celle de votre backend Render
         const API = 'https://myprof-educ-api.onrender.com/api';
-        
-        // Données locales pour le mode démo (en attendant la vraie base de données)
-        const teachersData = [
-            { id: 1, name: "Sophie Martin", subject: "Mathématiques", city: "Paris", hourly_rate: 25, bio: "Professeur passionné" },
-            { id: 2, name: "Thomas Bernard", subject: "Physique", city: "Lyon", hourly_rate: 30, bio: "Docteur en physique" },
-            { id: 3, name: "Émilie Petit", subject: "Français", city: "Toulouse", hourly_rate: 22, bio: "Lettres modernes" }
-        ];
+        let pendingUserEmail = null;
 
-        function showPage(page) {
-            document.getElementById('homePage').classList.add('hidden');
-            document.getElementById('teachersPage').classList.add('hidden');
-            document.getElementById('registerPage').classList.add('hidden');
-            document.getElementById('profilePage').classList.add('hidden');
-            document.getElementById(page + 'Page').classList.remove('hidden');
-            if(page === 'teachers') loadTeachers();
-            if(page === 'profile') loadProfile();
-        }
-
-        function loadTeachers() {
-            document.getElementById('teachersList').innerHTML = teachersData.map(t => 
-                '<div class="bg-white p-6 rounded-xl shadow">' +
-                    '<h3 class="text-xl font-bold">' + t.name + '</h3>' +
-                    '<p class="text-blue-600">' + t.subject + '</p>' +
-                    '<p>📍 ' + t.city + '</p>' +
-                    '<p class="text-2xl font-bold text-green-600">' + t.hourly_rate + '€/h</p>' +
-                '</div>'
-            ).join('');
-        }
-
-        function register() {
+        async function register() {
             const name = document.getElementById('regName').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
-            if(name && email && password) {
-                alert('Inscription réussie ! Vous pouvez vous connecter.');
-                showPage('home');
-            } else {
+            const role = document.getElementById('regRole').value;
+            const city = "Paris";
+
+            if (!name || !email || !password) {
                 alert('Veuillez remplir tous les champs');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role, city, extra: {} })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    pendingUserEmail = email;
+                    document.getElementById('registerForm').style.display = 'none';
+                    document.getElementById('verificationSection').style.display = 'block';
+                    alert(data.message || 'Code envoyé par email !');
+                } else {
+                    alert(data.error || 'Erreur lors de l\'inscription');
+                }
+            } catch (error) {
+                alert('Erreur réseau : ' + error.message);
             }
         }
 
-        function login() {
+        async function verifyCode() {
+            const code = document.getElementById('verificationCode').value;
+            if (!code || code.length !== 6) {
+                alert('Veuillez entrer le code à 6 chiffres reçu par email');
+                return;
+            }
+            try {
+                const response = await fetch(`${API}/auth/verify-code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: pendingUserEmail, code })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    alert('Compte vérifié avec succès ! Vous pouvez maintenant vous connecter.');
+                    location.reload();
+                } else {
+                    alert(data.error || 'Code invalide');
+                }
+            } catch (error) {
+                alert('Erreur réseau : ' + error.message);
+            }
+        }
+
+        async function login() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
-            if(email && password) {
-                localStorage.setItem('user', JSON.stringify({ name: "Utilisateur", email: email, role: "parent" }));
-                updateUI();
-                closeModal('loginModal');
-                showPage('profile');
-                alert('Connexion réussie !');
-            } else {
-                alert('Email et mot de passe requis');
+            try {
+                const response = await fetch(`${API}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    updateUI();
+                    closeModal('loginModal');
+                    showPage('profile');
+                    alert('Connexion réussie !');
+                } else {
+                    alert(data.error || 'Identifiants invalides');
+                }
+            } catch (error) {
+                alert('Erreur réseau : ' + error.message);
             }
         }
 
-        function logout() {
-            localStorage.removeItem('user');
-            updateUI();
-            showPage('home');
-        }
-
-        function updateUI() {
-            const user = localStorage.getItem('user');
-            document.getElementById('loginBtn').classList.toggle('hidden', !!user);
-            document.getElementById('logoutBtn').classList.toggle('hidden', !user);
-        }
-
-        function loadProfile() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            document.getElementById('profileInfo').innerHTML = 
-                '<p><strong>' + (user.name || 'Utilisateur') + '</strong></p>' +
-                '<p>Email: ' + (user.email || '') + '</p>' +
-                '<p>Rôle: ' + (user.role || 'parent') + '</p>';
-        }
-
+        function logout() { localStorage.clear(); updateUI(); showPage('home'); }
+        function updateUI() { const token = localStorage.getItem('token'); document.getElementById('loginBtn').classList.toggle('hidden', !!token); document.getElementById('logoutBtn').classList.toggle('hidden', !token); document.getElementById('profileBtn').classList.toggle('hidden', !token); }
+        function loadProfile() { const user = JSON.parse(localStorage.getItem('user') || '{}'); document.getElementById('profileInfo').innerHTML = `<p><strong>${user.name}</strong></p><p>Email: ${user.email}</p><p>Rôle: ${user.role}</p>`; }
+        function showPage(page) { ['home', 'teachers', 'register', 'profile'].forEach(p => document.getElementById(p + 'Page').classList.add('hidden')); document.getElementById(page + 'Page').classList.remove('hidden'); if (page === 'teachers') loadTeachers(); if (page === 'profile') loadProfile(); }
+        async function loadTeachers() { try { const res = await fetch(`${API}/teachers`); const data = await res.json(); document.getElementById('teachersList').innerHTML = data.map(t => `<div class="bg-white p-6 rounded-xl shadow"><h3 class="text-xl font-bold">${t.name}</h3><p class="text-blue-600">${t.subject}</p><p>📍 ${t.city}</p><p class="text-2xl font-bold text-green-600">${t.hourly_rate}€/h</p></div>`).join(''); } catch(e) { console.error(e); } }
         function openLoginModal() { document.getElementById('loginModal').classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-        window.onclick = (e) => { if(e.target.classList.contains('fixed')) e.target.classList.add('hidden'); }
+        window.onclick = (e) => { if (e.target.classList.contains('fixed')) e.target.classList.add('hidden'); }
         
         updateUI();
         loadTeachers();
