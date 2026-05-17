@@ -1,75 +1,23 @@
 // backend/utils/email.js
 const { Resend } = require('resend');
+
+// Initialisation de Resend avec la clé API
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * Envoie un email de vérification avec un lien magique
+ * Utilise le domaine par défaut de Resend (@resend.dev) - pas besoin de nom de domaine
  * @param {string} to - L'adresse email du destinataire
  * @param {string} token - Le token unique de vérification
  */
 async function sendVerificationEmail(to, token) {
-    // Lien de vérification (pointe vers votre frontend Netlify)
+    // Lien de vérification vers votre site Netlify
     const verificationLink = `https://moonlit-sopapillas-c75f39.netlify.app/verify?token=${token}`;
     
     try {
         const { data, error } = await resend.emails.send({
-            Site de cours particuliers opérationnel
-Site de cours particuliers opérationnel
-
-Parfait ! L'erreur est très claire et c'est une bonne nouvelle : Resend fonctionne, mais il bloque les envois vers Gmail car vous n'avez pas encore vérifié un domaine.
-
-Nous allons corriger cela très simplement.
-Action 1 : Créez un domaine gratuit sur Resend (sans acheter de nom)
-
-Resend permet d'utiliser leur domaine par défaut @resend.dev pour les tests.
-Modifiez backend/utils/email.js
-
-Remplacez la ligne from par celle-ci :
-javascript
-
-from: 'MyProfEduc <onboarding@resend.dev>',
-
-Poussez cette modification sur GitHub et redéployez sur Render.
-Action 2 : Testez l'inscription avec un email non-Gmail
-
-Pour le test, utilisez une adresse Hotmail, Outlook, Yahoo, ou un email temporaire (https://temp-mail.org).
-
-L'email arrivera car Resend autorise l'envoi vers d'autres domaines même sans vérification.
-Action 3 (Solution permanente) : Vérifiez votre domaine sur Resend
-
-Pour envoyer des emails vers Gmail et avoir un from professionnel (@myprofeduc.fr) :
-
-    Allez sur https://resend.com/domains
-
-    Cliquez sur "Add Domain"
-
-    Entrez myprofeduc.fr (ou le domaine que vous avez acheté)
-
-    Resend vous donne des enregistrements DNS
-
-    Ajoutez-les chez OVH (ou votre registrar)
-
-    Attendez la vérification (5-30 minutes)
-
-    Changez le from dans email.js par : 'MyProfEduc <contact@myprofeduc.fr>'
-
-Résumé des tests à faire maintenant :
-Étape	Action
-1	Modifiez le from sur GitHub (onboarding@resend.dev)
-2	Redéployez sur Render
-3	Créez un compte sur votre site avec un email Hotmail/Outlook/temp-mail
-4	Vérifiez que vous recevez l'email avec le lien
-
-Dites-moi quand vous avez modifié le from et testé. 🚀
-je n'ai pas finalement de nom de domaine
-
-Pas de problème ! Vous n'avez pas besoin de nom de domaine pour que votre site fonctionne parfaitement. Nous allons simplement utiliser le domaine par défaut de Resend (@resend.dev) qui est gratuit et ne nécessite aucune vérification.
-Action 1 : Vérifiez que votre email.js utilise le bon from
-
-Sur GitHub, ouvrez backend/utils/email.js et assurez-vous que la ligne from est :
-javascript
-
-from: 'MyProfEduc <onboarding@resend.dev>',
+            // Domain par défaut de Resend - fonctionne sans vérification
+            from: 'MyProfEduc <onboarding@resend.dev>',
             to: [to],
             subject: '✅ Vérifiez votre email pour activer votre compte MyProfEduc',
             html: `
@@ -93,7 +41,7 @@ from: 'MyProfEduc <onboarding@resend.dev>',
                         <p style="color: #555; line-height: 1.5;">Pour activer votre compte, cliquez sur le bouton ci-dessous :</p>
                         
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="${verificationLink}" style="background-color: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">Activer mon compte</a>
+                            <a href="${verificationLink}" style="background-color: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Activer mon compte</a>
                         </div>
                         
                         <p style="color: #555; line-height: 1.5;">Ou copiez ce lien dans votre navigateur :</p>
