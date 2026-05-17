@@ -13,7 +13,63 @@ async function sendVerificationEmail(to, token) {
     
     try {
         const { data, error } = await resend.emails.send({
-            from: 'MyProfEduc <useramine57@gmail.com>',
+            Site de cours particuliers opérationnel
+Site de cours particuliers opérationnel
+
+Parfait ! L'erreur est très claire et c'est une bonne nouvelle : Resend fonctionne, mais il bloque les envois vers Gmail car vous n'avez pas encore vérifié un domaine.
+
+Nous allons corriger cela très simplement.
+Action 1 : Créez un domaine gratuit sur Resend (sans acheter de nom)
+
+Resend permet d'utiliser leur domaine par défaut @resend.dev pour les tests.
+Modifiez backend/utils/email.js
+
+Remplacez la ligne from par celle-ci :
+javascript
+
+from: 'MyProfEduc <onboarding@resend.dev>',
+
+Poussez cette modification sur GitHub et redéployez sur Render.
+Action 2 : Testez l'inscription avec un email non-Gmail
+
+Pour le test, utilisez une adresse Hotmail, Outlook, Yahoo, ou un email temporaire (https://temp-mail.org).
+
+L'email arrivera car Resend autorise l'envoi vers d'autres domaines même sans vérification.
+Action 3 (Solution permanente) : Vérifiez votre domaine sur Resend
+
+Pour envoyer des emails vers Gmail et avoir un from professionnel (@myprofeduc.fr) :
+
+    Allez sur https://resend.com/domains
+
+    Cliquez sur "Add Domain"
+
+    Entrez myprofeduc.fr (ou le domaine que vous avez acheté)
+
+    Resend vous donne des enregistrements DNS
+
+    Ajoutez-les chez OVH (ou votre registrar)
+
+    Attendez la vérification (5-30 minutes)
+
+    Changez le from dans email.js par : 'MyProfEduc <contact@myprofeduc.fr>'
+
+Résumé des tests à faire maintenant :
+Étape	Action
+1	Modifiez le from sur GitHub (onboarding@resend.dev)
+2	Redéployez sur Render
+3	Créez un compte sur votre site avec un email Hotmail/Outlook/temp-mail
+4	Vérifiez que vous recevez l'email avec le lien
+
+Dites-moi quand vous avez modifié le from et testé. 🚀
+je n'ai pas finalement de nom de domaine
+
+Pas de problème ! Vous n'avez pas besoin de nom de domaine pour que votre site fonctionne parfaitement. Nous allons simplement utiliser le domaine par défaut de Resend (@resend.dev) qui est gratuit et ne nécessite aucune vérification.
+Action 1 : Vérifiez que votre email.js utilise le bon from
+
+Sur GitHub, ouvrez backend/utils/email.js et assurez-vous que la ligne from est :
+javascript
+
+from: 'MyProfEduc <onboarding@resend.dev>',
             to: [to],
             subject: '✅ Vérifiez votre email pour activer votre compte MyProfEduc',
             html: `
