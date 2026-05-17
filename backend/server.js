@@ -6,7 +6,6 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { Pool } = require('pg');
-const { sendVerificationEmail } = require('./utils/email');
 
 const app = express();
 
@@ -37,13 +36,6 @@ pool.connect((err) => {
 });
 
 // ==========================================
-// FONCTIONS UTILITAIRES
-// ==========================================
-function generateToken() {
-    return crypto.randomBytes(32).toString('hex');
-}
-
-// ==========================================
 // ROUTE DE TEST
 // ==========================================
 app.get('/api/health', (req, res) => {
@@ -68,7 +60,7 @@ app.get('/api/teachers', async (req, res) => {
 });
 
 // ==========================================
-// INSCRIPTION (envoie un email de vérification)
+// INSCRIPTION - Compte activé immédiatement
 // ==========================================
 app.post('/api/auth/register', async (req, res) => {
     const { name, email, password, role, city } = req.body;
@@ -87,66 +79,21 @@ app.post('/api/auth/register', async (req, res) => {
         // Hacher le mot de passe
         const passwordHash = await bcrypt.hash(password, 10);
         
-        // Générer un token de vérification
-        const verificationToken = generateToken();
-
-        // Créer l'utilisateur (non vérifié)
+        // Créer l'utilisateur avec is_verified = true (compte activé directement)
         const result = await pool.query(
-            `INSERT INTO users (name, email, password_hash, role, city, verification_token, is_verified) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-            [name, email, passwordHash, role, city, verificationToken, false]
+            `INSERT INTO users (name, email, password_hash, role, city, is_verified) 
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+            [name, email, passwordHash, role, city || 'Non renseigné', true]
         );
 
-        // Envoyer l'email de vérification
-        await sendVerificationEmail(email, verificationToken);
-
         res.status(201).json({
-            message: 'Un email de vérification a été envoyé à votre adresse. Cliquez sur le lien pour activer votre compte.',
+            message: '✅ Inscription réussie ! Vous pouvez maintenant vous connecter.',
             userId: result.rows[0].id
         });
 
     } catch (error) {
         console.error('Erreur inscription:', error);
         res.status(500).json({ error: 'Erreur serveur lors de l\'inscription.' });
-    }
-});
-
-// ==========================================
-// VÉRIFICATION PAR LIEN MAGIQUE
-// ==========================================
-app.get('/api/auth/verify', async (req, res) => {
-    const { token } = req.query;
-
-    if (!token) {
-        return res.status(400).json({ error: 'Token manquant' });
-    }
-
-    try {
-        // Chercher l'utilisateur avec ce token
-        const result = await pool.query(
-            `SELECT id FROM users 
-             WHERE verification_token = $1 AND is_verified = false`,
-            [token]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(400).json({ error: 'Lien invalide ou compte déjà vérifié.' });
-        }
-
-        // Activer le compte
-        await pool.query(
-            `UPDATE users 
-             SET is_verified = true, verification_token = NULL 
-             WHERE id = $1`,
-            [result.rows[0].id]
-        );
-
-        // Rediriger vers le frontend avec un message de succès
-        res.redirect('https://moonlit-sopapillas-c75f39.netlify.app?verification=success');
-        
-    } catch (error) {
-        console.error('Erreur vérification:', error);
-        res.status(500).json({ error: 'Erreur serveur lors de la vérification.' });
     }
 });
 
@@ -164,20 +111,23 @@ app.post('/api/auth/login', async (req, res) => {
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 
         if (result.rows.length === 0) {
-            return res.status(401).json({ error: 'Identifiants invalides.' });
+            return res.status(401).json({ error: 'Email ou mot de passe incorrect.' });
         }
 
         const user = result.rows[0];
 
+        // Vérifier si le compte est activé (normalement oui)
         if (!user.is_verified) {
             return res.status(401).json({ error: 'Veuillez vérifier votre email avant de vous connecter.' });
         }
 
+        // Vérifier le mot de passe
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) {
-            return res.status(401).json({ error: 'Identifiants invalides.' });
+            return res.status(401).json({ error: 'Email ou mot de passe incorrect.' });
         }
 
+        // Générer un token simple
         const token = crypto.randomBytes(64).toString('hex');
 
         res.json({
@@ -198,17 +148,18 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // ==========================================
-// ROUTE PRINCIPALE
+// ROUTE PRINCIPALE POUR LE FRONTEND
 // ==========================================
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
 // ==========================================
-// DÉMARRAGE
+// DÉMARRAGE DU SERVEUR
 // ==========================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`\n🚀 MyProfEduc démarré sur http://localhost:${PORT}`);
     console.log(`📁 Base de données: ${process.env.DATABASE_URL ? '✅ Connectée' : '❌ Non configurée'}`);
+    console.log(`✅ Mode: Inscription sans vérification email (compte activé immédiatement)`);
 });
