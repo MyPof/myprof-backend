@@ -1,24 +1,26 @@
+// backend/server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { Pool } = require('pg');
 const { sendVerificationEmail } = require('./utils/email');
 
 const app = express();
 
 // ==========================================
-// CONFIGURATION CORS - LA SOLUTION À VOTRE PROBLÈME
+// CONFIGURATION CORS
 // ==========================================
 app.use(cors({
-    origin: '*', // Accepte les requêtes de n'importe quelle origine (Netlify)
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 // ==========================================
@@ -37,19 +39,19 @@ pool.connect((err) => {
 // ==========================================
 // FONCTIONS UTILITAIRES
 // ==========================================
-function generateCode() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+function generateToken() {
+    return crypto.randomBytes(32).toString('hex');
 }
 
 // ==========================================
-// ROUTE DE TEST (SANTÉ)
+// ROUTE DE TEST
 // ==========================================
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'API MyProfEduc fonctionne !' });
 });
 
 // ==========================================
-// ROUTE POUR RÉCUPÉRER LES ENSEIGNANTS
+// ROUTE ENSEIGNANTS
 // ==========================================
 app.get('/api/teachers', async (req, res) => {
     try {
@@ -66,7 +68,7 @@ app.get('/api/teachers', async (req, res) => {
 });
 
 // ==========================================
-// INSCRIPTION (Étape 1 : Envoi du code)
+// INSCRIPTION (envoie un email de vérification)
 // ==========================================
 app.post('/api/auth/register', async (req, res) => {
     const { name, email, password, role, city } = req.body;
@@ -76,25 +78,30 @@ app.post('/api/auth/register', async (req, res) => {
     }
 
     try {
+        // Vérifier si l'email existe déjà
         const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
         if (existing.rows.length > 0) {
-            return res.status(400).json({ error: 'Email déjà utilisé' });
+            return res.status(400).json({ error: 'Cet email est déjà utilisé' });
         }
 
+        // Hacher le mot de passe
         const passwordHash = await bcrypt.hash(password, 10);
-        const verificationCode = generateCode();
+        
+        // Générer un token de vérification
+        const verificationToken = generateToken();
 
+        // Créer l'utilisateur (non vérifié)
         const result = await pool.query(
-            `INSERT INTO users (name, email, password_hash, role, city, verification_code, is_verified) 
+            `INSERT INTO users (name, email, password_hash, role, city, verification_token, is_verified) 
              VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-            [name, email, passwordHash, role, city, verificationCode, false]
+            [name, email, passwordHash, role, city, verificationToken, false]
         );
 
-        // Envoi de l'email (assurez-vous que votre fonction sendVerificationEmail est bien configurée)
-        await sendVerificationEmail(email, verificationCode).catch(err => console.error('Erreur envoi email:', err));
+        // Envoyer l'email de vérification
+        await sendVerificationEmail(email, verificationToken);
 
         res.status(201).json({
-            message: 'Un code de vérification a été envoyé à votre adresse email.',
+            message: 'Un email de vérification a été envoyé à votre adresse. Cliquez sur le lien pour activer votre compte.',
             userId: result.rows[0].id
         });
 
@@ -105,33 +112,38 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // ==========================================
-// VÉRIFICATION DU CODE (Étape 2)
+// VÉRIFICATION PAR LIEN MAGIQUE
 // ==========================================
-app.post('/api/auth/verify-code', async (req, res) => {
-    const { email, code } = req.body;
+app.get('/api/auth/verify', async (req, res) => {
+    const { token } = req.query;
 
-    if (!email || !code) {
-        return res.status(400).json({ error: 'Email et code requis.' });
+    if (!token) {
+        return res.status(400).json({ error: 'Token manquant' });
     }
 
     try {
+        // Chercher l'utilisateur avec ce token
         const result = await pool.query(
             `SELECT id FROM users 
-             WHERE email = $1 AND verification_code = $2 AND is_verified = false`,
-            [email, code]
+             WHERE verification_token = $1 AND is_verified = false`,
+            [token]
         );
 
         if (result.rows.length === 0) {
-            return res.status(400).json({ error: 'Code invalide ou compte déjà vérifié.' });
+            return res.status(400).json({ error: 'Lien invalide ou compte déjà vérifié.' });
         }
 
+        // Activer le compte
         await pool.query(
-            `UPDATE users SET is_verified = true, verification_code = NULL WHERE id = $1`,
+            `UPDATE users 
+             SET is_verified = true, verification_token = NULL 
+             WHERE id = $1`,
             [result.rows[0].id]
         );
 
-        res.json({ message: 'Compte vérifié avec succès ! Vous pouvez maintenant vous connecter.' });
-
+        // Rediriger vers le frontend avec un message de succès
+        res.redirect('https://moonlit-sopapillas-c75f39.netlify.app?verification=success');
+        
     } catch (error) {
         console.error('Erreur vérification:', error);
         res.status(500).json({ error: 'Erreur serveur lors de la vérification.' });
@@ -166,11 +178,7 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ error: 'Identifiants invalides.' });
         }
 
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'secret_temp',
-            { expiresIn: '7d' }
-        );
+        const token = crypto.randomBytes(64).toString('hex');
 
         res.json({
             token,
@@ -190,18 +198,17 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // ==========================================
-// ROUTE PRINCIPALE POUR LE FRONTEND
+// ROUTE PRINCIPALE
 // ==========================================
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
 // ==========================================
-// DÉMARRAGE DU SERVEUR
+// DÉMARRAGE
 // ==========================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`\n🚀 MyProfEduc démarré sur http://localhost:${PORT}`);
     console.log(`📁 Base de données: ${process.env.DATABASE_URL ? '✅ Connectée' : '❌ Non configurée'}`);
-    console.log(`🔒 CORS: Toutes les origines sont autorisées`);
 });
